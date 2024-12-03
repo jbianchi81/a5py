@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, ForeignKey, UniqueConstraint
-from a5_tables.series_abstract import SerieAbstract
+from .series_abstract import SerieAbstract
 from sqlalchemy.orm import relationship
-from a5_tables.areas import Area
+from .areas import Area
 
 class SerieAreal(SerieAbstract):
     __tablename__ = 'series_areal'

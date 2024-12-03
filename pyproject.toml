@@ -36,5 +36,5 @@ dependencies = [
 include-package-data = true
 
 [tool.setuptools.packages.find]
-where = ["a5py"]
-include = ["*"]
+where = ["src"]
+include = ["a5py*"]

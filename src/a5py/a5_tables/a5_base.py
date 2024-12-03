@@ -1,4 +1,4 @@
-from util import get_geometry_columns, model_to_dict
+from ..util import get_geometry_columns, model_to_dict
 
 class A5Base:
 

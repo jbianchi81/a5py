@@ -1,8 +1,8 @@
 from sqlalchemy import Column, Integer, Float, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship
 
-from a5_tables.series_areal import SerieAreal
-from a5_tables.observaciones_abstract import ObservacionAbstract
+from .series_areal import SerieAreal
+from .observaciones_abstract import ObservacionAbstract
 
 class ObservacionAreal(ObservacionAbstract):
     __tablename__ = 'observaciones_areal'

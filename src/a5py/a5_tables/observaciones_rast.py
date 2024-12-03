@@ -1,9 +1,9 @@
 from sqlalchemy import Column, Integer, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship
 
-from a5_tables.a5_types.raster import Raster
-from a5_tables.series_rast import SerieRast
-from a5_tables.observaciones_abstract import ObservacionAbstract
+from .a5_types.raster import Raster
+from .series_rast import SerieRast
+from .observaciones_abstract import ObservacionAbstract
 
 class ObservacionRast(ObservacionAbstract):
     __tablename__ = 'observaciones_rast'

@@ -7,15 +7,17 @@ from datetime import datetime
 from typing import List, Union
 import logging
 
-from util import readGeoJson, readJson, insert, upsert, model_to_dict, read, get_geometry_columns, GeoJSON, models_to_geojson_dict, update, delete, write_to_file
-from a5_tables.base import Base
-import a5_tables
+from .util.util import readGeoJson, readJson, insert, upsert, model_to_dict, read, get_geometry_columns, GeoJSON, models_to_geojson_dict, update, delete, write_to_file
+from .a5_tables.base import Base
+from .a5_tables import Area, SerieAreal, SerieRast, ObservacionAreal, ObservacionRast
 
-Area = a5_tables.Area
-SerieAreal = a5_tables.SerieAreal
-SerieRast = a5_tables.SerieRast
-ObservacionAreal = a5_tables.ObservacionAreal
-ObservacionRast = a5_tables.ObservacionRast
+a5_tables = {
+    "Area": Area,
+    "SerieAreal": SerieAreal,
+    "SerieRast": SerieRast,
+    "ObservacionAreal": ObservacionAreal,
+    "ObservacionRast": ObservacionRast
+}
 
 gdal.UseExceptions()
 
@@ -133,7 +135,7 @@ class Connection():
         insert : bool = False,
         on_conflict : str = "update",
         output : str = None
-        ) -> list[a5_tables.ObservacionAreal]:
+        ) -> list[ObservacionAreal]:
         """
             Clip raster timeseries with area and extract areal mean (or count, sum, stddev, min, max)
 
@@ -248,10 +250,10 @@ class Connection():
         Returns:
             list: _description_
         """
-        if not hasattr(a5_tables, model):
+        if model not in a5_tables:
             raise ValueError("Model not in a5_tables")
         
-        Model = getattr(a5_tables,model)
+        Model = a5_tables[model]
         
         if geojson:
             new_entries = readGeoJson(Model, data)
@@ -269,10 +271,10 @@ class Connection():
 
     def read(self, model : str, geojson : bool = False, filters : dict = {}, **more_filters) -> Union[list, GeoJSON]:
         
-        if not hasattr(a5_tables, model):
+        if model not in a5_tables:
             raise ValueError("Model not in a5_tables")
         
-        Model = getattr(a5_tables,model)
+        Model = a5_tables[model]
 
         for k, v in filters.items():
             if k in more_filters:
@@ -293,10 +295,10 @@ class Connection():
             return results
     
     def update(self, model : str, filters : dict = {}, update_fields : dict = {}, **more_update_fields) -> int:
-        if not hasattr(a5_tables, model):
+        if model not in a5_tables:
             raise ValueError("Model not in a5_tables")
         
-        Model = getattr(a5_tables,model)
+        Model = a5_tables[model]
 
         for k, v in update_fields.items():
             if k in more_update_fields:
@@ -310,10 +312,10 @@ class Connection():
     
     def delete(self, model : str, skip_confirmation : bool = False, filters : dict = {}, **more_filters) -> list:
 
-        if not hasattr(a5_tables, model):
+        if model not in a5_tables:
             raise ValueError("Model not in a5_tables")
         
-        Model = getattr(a5_tables,model)
+        Model = a5_tables["model"]
 
         for k, v in filters.items():
             if k in more_filters:

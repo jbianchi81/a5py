@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String
-from a5_tables.a5_base import A5Base
-from a5_tables.base import Base
+from .a5_base import A5Base
+from .base import Base
 
 class SerieAbstract(A5Base, Base):
     __abstract__ = True

@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, TIMESTAMP, Boolean
 from sqlalchemy.sql import func
-from a5_tables.a5_base import A5Base
-from a5_tables.base import Base
+from .a5_base import A5Base
+from .base import Base
 
 class ObservacionAbstract(A5Base, Base):
     __abstract__ = True

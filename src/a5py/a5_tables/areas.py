@@ -5,9 +5,9 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import DOUBLE_PRECISION
 from geoalchemy2 import Geometry
 
-from a5_tables.base import Base
-from a5_tables.a5_base import A5Base
-from a5_tables.a5_types.raster import Raster
+from .base import Base
+from .a5_base import A5Base
+from .a5_types.raster import Raster
 
 class Area(Base, A5Base):
     __tablename__ = 'areas_pluvio'

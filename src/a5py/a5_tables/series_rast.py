@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, String
-from a5_tables.series_abstract import SerieAbstract
+from .series_abstract import SerieAbstract
 
 class SerieRast(SerieAbstract):
     __tablename__ = 'series_rast'
