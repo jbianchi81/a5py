@@ -1,4 +1,6 @@
-# modis
+# a5py
+
+a5 hydrometeorologic database management system
 
 ## Instalación
 
@@ -61,3 +63,11 @@
 
 ## TODO
 - import gdal
+
+## Credits
+
+Instituto Nacional del Agua
+
+Ezeiza, Buenos Aires, Argentina
+
+2024
