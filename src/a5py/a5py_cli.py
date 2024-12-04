@@ -1,6 +1,7 @@
 from a5py.a5_connection import Connection, a5_tables
 from a5py.util import serialize_connection_string, validate_date, write_to_file
 from a5py.config import config
+from a5py import SerieRast
 import argparse
 import json
 import os
@@ -28,7 +29,6 @@ def parse_json(value):
     except json.JSONDecodeError:
         raise argparse.ArgumentTypeError(f"Invalid JSON string or file path: {value}")
 
-SerieRast = a5_tables.SerieRast
 
 def valid_date(date_str):
     try:
@@ -79,9 +79,9 @@ def valid_serie(serie : str):
         raise json.JSONDecodeError("parámetro serie incorrecto. No se pudo convertir a json: %s" % str(e))   
 
 def valid_a5_model(model):
-    if not hasattr(a5_tables, model):
+    if model not in a5_tables:
         raise ValueError("el argumento <clase> no corresponde con una clase válida del esquema a5")
-    return getattr(a5_tables, model)
+    return a5_tables[model]
 
 def run_export(args):
     filters = {
@@ -176,8 +176,7 @@ def run_rast2areal(args):
     finally:
         connection.cleanup()
 
-if __name__ == "__main__":
-    
+def main():    
     parser = argparse.ArgumentParser(description="Comandos para interactuar con la base de datos")
 
     subparsers = parser.add_subparsers(title="commands", dest="command", required=True)
@@ -211,14 +210,14 @@ if __name__ == "__main__":
         type=parse_json,
         help="string JSON o ruta a un archivo JSON"
     )
-    create_parser.add_argument("-m","--model", type=valid_a5_model, help="Modelo de los objetos a insertar. Opciones: %s. Si no se define, json_input debe ser tener como claves los nombres de las clases y como valores, arreglos de los objetos a crear. Si se define, json_input puede ser un arreglo de objetos o un único objeto" % a5_tables.__all__)
+    create_parser.add_argument("-m","--model", type=valid_a5_model, help="Modelo de los objetos a insertar. Opciones: %s. Si no se define, json_input debe ser tener como claves los nombres de las clases y como valores, arreglos de los objetos a crear. Si se define, json_input puede ser un arreglo de objetos o un único objeto" % a5_tables.keys())
     create_parser.add_argument("-u","--url",type=str, help="URL de la base de datos (ejemplo: postgresql://username:password@localhost:5432/dbname)", default = default_connection_string)
     create_parser.add_argument("-g","--geojson", action="store_true", help = "Indica que json_input es GeoJSON")
     create_parser.set_defaults(func=run_create)
 
     # read
     read_parser = subparsers.add_parser("read", help="Lee objetos de base de datos")
-    read_parser.add_argument("model", type=valid_a5_model, help="Modelo de los objetos a leer. Opciones: %s." % a5_tables.__all__)
+    read_parser.add_argument("model", type=valid_a5_model, help="Modelo de los objetos a leer. Opciones: %s." % a5_tables.keys())
     read_parser.add_argument("output", type=str, help="Archivo de salida")
     read_parser.add_argument("-u","--url",type=str, help="URL de la base de datos (ejemplo: postgresql://username:password@localhost:5432/dbname)", default = default_connection_string)
     read_parser.add_argument("-g","--geojson", action="store_true", help = "genera formato GeoJSON. Sólo válido para objetos con geometría")
@@ -227,7 +226,7 @@ if __name__ == "__main__":
 
     # update
     update_parser = subparsers.add_parser("update", help="Actualiza objetos de base de datos")
-    update_parser.add_argument("model", type=valid_a5_model, help="Modelo de los objetos a actualizar. Opciones: %s." % a5_tables.__all__)
+    update_parser.add_argument("model", type=valid_a5_model, help="Modelo de los objetos a actualizar. Opciones: %s." % a5_tables.keys())
     update_parser.add_argument("update_fields", type=parse_key_value_pair,action='append', help="Campo a actualizar en la forma clave=valor")
     # update_parser.add_argument("output", type=str, help="Archivo de salida")
     update_parser.add_argument("-u","--url",type=str, help="URL de la base de datos (ejemplo: postgresql://username:password@localhost:5432/dbname)", default = default_connection_string)
@@ -237,7 +236,7 @@ if __name__ == "__main__":
 
     # delete
     delete_parser = subparsers.add_parser("delete", help="Elimina objetos de base de datos")
-    delete_parser.add_argument("model", type=valid_a5_model, help="Modelo de los objetos a eliminar. Opciones: %s." % a5_tables.__all__)
+    delete_parser.add_argument("model", type=valid_a5_model, help="Modelo de los objetos a eliminar. Opciones: %s." % a5_tables.keys())
     delete_parser.add_argument("-o","--output", type=str, help="Guardar los objetos eliminados en este archivo de salida")
     delete_parser.add_argument("-u","--url",type=str, help="URL de la base de datos (ejemplo: postgresql://username:password@localhost:5432/dbname)", default = default_connection_string)
     delete_parser.add_argument("-f","--filter", type=parse_key_value_pair,action='append', help="Filtro en la forma clave=valor")
@@ -263,3 +262,6 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     args.func(args)
+
+if __name__ == "__main__":
+    main()

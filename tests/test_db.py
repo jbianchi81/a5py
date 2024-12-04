@@ -229,8 +229,7 @@ class TestDatabase(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp_dir:
             file_path = f"{temp_dir}/serie_areal.json"
             command = [
-                "python",
-                "abm.py", 
+                "a5py", 
                 "rast2areal", 
                 str(rast_series_id), 
                 str(area_id), 
@@ -265,8 +264,7 @@ class TestDatabase(unittest.TestCase):
         self.session.commit()
 
         command = [
-                "python",
-                "abm.py", 
+                "a5py", 
                 "rast2areal", 
                 str(rast_series_id), 
                 str(area_id), 
@@ -375,7 +373,7 @@ class TestDatabase(unittest.TestCase):
                 
                 for input_json in [file_path, json.dumps(json.load(open(file_path)))]:
 
-                    command = ["python", "abm.py", "create", "-u",self.url,input_json]            
+                    command = ["a5py", "create", "-u",self.url,input_json]            
                     if json_object[1]:
                         command.append("-g")
                     if json_object[2]:
@@ -452,7 +450,7 @@ class TestDatabase(unittest.TestCase):
         for fmt in ["json", "geojson"]:
             with tempfile.TemporaryDirectory() as temp_dir:
                 file_path = f"{temp_dir}/areas.%s" % fmt
-                command = ["python", "abm.py", "read", "Area", file_path, "-u", self.url] 
+                command = ["a5py", "read", "Area", file_path, "-u", self.url] 
                 if fmt == "geojson":
                     command.append("-g")
                 result = subprocess.run(command, check=True)
@@ -497,7 +495,7 @@ class TestDatabase(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as temp_dir:
             file_path = f"{temp_dir}/areas.json"
-            command = ["python", "abm.py", "read", "Area", file_path, "-u", self.url, "-f", "id=2"]
+            command = ["a5py", "read", "Area", file_path, "-u", self.url, "-f", "id=2"]
             result = subprocess.run(command, check=True)
             self.assertEqual(result.returncode, 0, "Process failed with return code %d" % result.returncode) 
             self.assertTrue(os.path.exists(file_path), "Output file not found")
@@ -530,7 +528,7 @@ class TestDatabase(unittest.TestCase):
             file_path = f"{temp_dir}/areas.json"
 
             for index, flt in enumerate(["id=2", "nombre=Area 2", None]):
-                command = ["python", "abm.py", "read", "Area", file_path, "-u", self.url]
+                command = ["a5py", "read", "Area", file_path, "-u", self.url]
                 if flt is not None:
                     command.extend([ "-f", flt])
                 result = subprocess.run(command, check=True)
@@ -558,7 +556,7 @@ class TestDatabase(unittest.TestCase):
         
         with tempfile.TemporaryDirectory() as temp_dir:
             file_path = f"{temp_dir}/areas.json"
-            command = ["python", "abm.py", "read", "Area", file_path, "-u", self.url, "-f", "badfilterkey=2"]
+            command = ["a5py", "read", "Area", file_path, "-u", self.url, "-f", "badfilterkey=2"]
 
             with self.assertRaises(subprocess.CalledProcessError):
                 result = subprocess.run(command, check=True)
@@ -596,7 +594,7 @@ class TestDatabase(unittest.TestCase):
             connection.cleanup()
         
         for index, flt in enumerate(["id=2","id=1"]):
-            command = ["python", "abm.py", "update", "Area", "nombre=Nuevo nombre", "-u", self.url]
+            command = ["a5py", "update", "Area", "nombre=Nuevo nombre", "-u", self.url]
             if flt is not None:
                 command.extend([ "-f", flt])
             result = subprocess.run(command, check=True)
@@ -653,7 +651,7 @@ class TestDatabase(unittest.TestCase):
         
         with tempfile.TemporaryDirectory() as temp_dir:
             file_path = f"{temp_dir}/sample_geom.json"
-            command = ["python", "abm.py", "delete", "Area", "-f", "id=1","-u",self.url,"-o",file_path,"-s"]  
+            command = ["a5py", "delete", "Area", "-f", "id=1","-u",self.url,"-o",file_path,"-s"]  
             result = subprocess.run(command, check=True)
             self.assertEqual(result.returncode, 0, "Process failed with return code %d" % result.returncode)
             self.assertTrue(os.path.exists(file_path))

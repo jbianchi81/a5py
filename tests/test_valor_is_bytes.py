@@ -1,11 +1,10 @@
 from a5py.config import config
 from a5py.util import serialize_connection_string
-from a5py.a5_connection import Connection, a5_tables
+from a5py.a5_connection import Connection
+from a5py import ObservacionRast 
 import unittest
 import rasterio
 from io import BytesIO
-
-ObservacionRast = a5_tables.ObservacionRast
 
 connection_dict = {"protocol":"postgresql",**{option: config.get("db_params",option) for option in config.options("db_params")}}
 

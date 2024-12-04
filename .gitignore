@@ -8,3 +8,4 @@ dist
 src/a5py/a5py.egg-info
 src/a5py.egg-info
 __pycache__
+.vscode

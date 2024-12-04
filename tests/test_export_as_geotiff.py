@@ -21,7 +21,7 @@ class TestCLIGeoTIFF(unittest.TestCase):
     def test_cli_produces_valid_geotiff(self):
         """Test if the CLI command produces a valid GeoTIFF."""
         # Replace with your actual CLI command
-        command = ["python", "abm.py", "export", "2009-02-10" , self.output_file]
+        command = ["a5py", "export", "2009-02-10" , self.output_file]
         
         # Run the CLI command
         subprocess.run(command, check=True)

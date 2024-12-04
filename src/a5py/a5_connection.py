@@ -315,7 +315,7 @@ class Connection():
         if model not in a5_tables:
             raise ValueError("Model not in a5_tables")
         
-        Model = a5_tables["model"]
+        Model = a5_tables[model]
 
         for k, v in filters.items():
             if k in more_filters:
