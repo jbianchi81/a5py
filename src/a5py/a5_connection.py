@@ -7,7 +7,7 @@ from datetime import datetime
 from typing import List, Union
 import logging
 
-from .util.util import readGeoJson, readJson, insert, upsert, model_to_dict, read, get_geometry_columns, GeoJSON, models_to_geojson_dict, update, delete, write_to_file
+from .util.util import readGeoJson, readJson, insert, upsert, model_to_dict, read, get_geometry_columns, GeoJSON, models_to_geojson_dict, update, delete, write_to_file, importRaster, parse_connection_string, upsertObservacionRaster
 from .a5_tables.base import Base
 from .a5_tables import Area, SerieAreal, SerieRast, ObservacionAreal, ObservacionRast
 
@@ -27,6 +27,7 @@ class Connection():
         self.engine = create_engine(url = url)
         self.Session = sessionmaker(bind=self.engine)
         self.session = self.Session()
+        self.db_params = parse_connection_string(url)
 
     def cleanup(self):
         self.session.rollback()
@@ -74,6 +75,16 @@ class Connection():
         for attr, value in filters.items():
             query = query.filter(getattr(ObservacionRast, attr) == value)
         return query.all()
+
+    def observacion_rast_from_geotiff(self, input_filename, timestart : datetime, series_id : int, **kwargs):
+        importRaster(input_filename, self.db_params)
+        result = upsertObservacionRaster(
+            self.db_params,
+            timestart,
+            series_id,
+            return_values=True,
+            **kwargs)
+        return ObservacionRast(**result)
 
     def observacion_rast_to_geotiff(self,filters : dict,output_filename : str):
 
@@ -230,7 +241,15 @@ class Connection():
             if output is not None:
                 write_to_file(output, result, serialize_as_json=True, indent = 4)
             return result
+
+    def load(self, model : str, input_filename : str, **kwargs) -> list:
+        """Reads objects from file, inserts into db and returns as list of model instances"""
+        if model not in a5_tables:
+            raise ValueError("Model not in a5_tables")
         
+        Model = a5_tables[model]
+        return Model.load(connection = self, input_filename = input_filename, **kwargs)
+    
     def create(self, model : str, data : Union[List[dict],dict,str], geojson : bool = False, on_conflict : str = None, returning : bool = False) -> list:
         """Insert instances of model
 
@@ -251,7 +270,7 @@ class Connection():
             list: _description_
         """
         if model not in a5_tables:
-            raise ValueError("Model not in a5_tables")
+            raise ValueError("Model %s not in a5_tables" % model)
         
         Model = a5_tables[model]
         

@@ -44,7 +44,6 @@ def parse_key_value_pair(pair : str) -> Tuple[str, str]:
     except ValueError:
         raise argparse.ArgumentTypeError(f"Invalid key-value pair: '{pair}'. Expected format is key=value.")
 
-
 def run_create_tables(args):
     """
     url : str, serie : dict, force_recreate : bool = False
@@ -102,6 +101,16 @@ def run_create(args):
                 connection.create(model.__name__, values)
         else:
             connection.create(args.model.__name__, args.json_input, args.geojson)
+    except Exception as e:
+        logging.error("Ocurrió un error en la transacción")
+        raise
+    finally:
+        connection.cleanup()
+
+def run_load(args):
+    connection = Connection(url=args.url)
+    try:
+        connection.load(args.model.__name__, args.input_filename, **dict(args.kwargs))
     except Exception as e:
         logging.error("Ocurrió un error en la transacción")
         raise
@@ -214,6 +223,18 @@ def main():
     create_parser.add_argument("-u","--url",type=str, help="URL de la base de datos (ejemplo: postgresql://username:password@localhost:5432/dbname)", default = default_connection_string)
     create_parser.add_argument("-g","--geojson", action="store_true", help = "Indica que json_input es GeoJSON")
     create_parser.set_defaults(func=run_create)
+
+    # load
+    load_parser = subparsers.add_parser("load", help="Inserta objetos en base de datos a partir de archivo GDAL o JSON")
+    load_parser.add_argument(
+        'input_filename',
+        type=str,
+        help="ruta a un archivo GDAL o JSON"
+    )
+    load_parser.add_argument("model", type=valid_a5_model, help="Modelo de los objetos a insertar. Opciones: %s." % a5_tables.keys())
+    load_parser.add_argument("-u","--url",type=str, help="URL de la base de datos (ejemplo: postgresql://username:password@localhost:5432/dbname)", default = default_connection_string)
+    load_parser.add_argument("-k","--kwargs",type=parse_key_value_pair,help="argumentos adicionales en forma de clave=valor",action="append")
+    load_parser.set_defaults(func=run_load)
 
     # read
     read_parser = subparsers.add_parser("read", help="Lee objetos de base de datos")

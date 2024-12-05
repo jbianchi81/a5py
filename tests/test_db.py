@@ -18,6 +18,9 @@ from a5py.a5_connection import Connection
 import logging
 import subprocess
 import os
+import numpy as np
+import rasterio
+from rasterio.transform import from_origin
 
 test_db_params = {"protocol": "postgresql", **{option: config.get("test_db_params",option) for option in config.options("test_db_params")}}
 
@@ -665,6 +668,79 @@ class TestDatabase(unittest.TestCase):
                 self.fail(f"{e}")
             finally:
                 connection.cleanup()
+    
+    def test_import_gdal(self):
+        connection = Connection(self.url)
+
+        connection.create("SerieRast",{"id":19,"fuentes_id":40})
+        # Output GeoTIFF file path
+        with tempfile.TemporaryDirectory() as temp_dir:
+            input_filename = f"{temp_dir}/sample_rast.tif"
+
+            create_sample_gtiff(input_filename)
+            
+            result = connection.observacion_rast_from_geotiff(input_filename, datetime(2009,1,1), 19)
+
+            self.assertIsInstance(result, a5_tables.ObservacionRast)
+
+    def test_load_gdal(self):
+        connection = Connection(self.url)
+
+        connection.create("SerieRast",{"id":19,"fuentes_id":40})
+        # Output GeoTIFF file path
+        with tempfile.TemporaryDirectory() as temp_dir:
+            input_filename = f"{temp_dir}/sample_rast.tif"
+
+            create_sample_gtiff(input_filename)
+            
+            result = connection.load('ObservacionRast',input_filename, timestart=datetime(2009,1,1), series_id=19)
+
+            self.assertIsInstance(result, list)
+            self.assertEqual(len(result),1)
+            self.assertIsInstance(result[0], a5_tables.ObservacionRast)
+
+    def test_load_json(self):
+        connection = Connection(self.url)
+
+        # Output json file path
+        with tempfile.TemporaryDirectory() as temp_dir:
+            input_filename = f"{temp_dir}/sample_json.json"
+
+            with open(input_filename,"w") as f:
+                json.dump({"id":19,"fuentes_id":40},f)
+           
+            result = connection.load('SerieRast',input_filename)
+
+            self.assertIsInstance(result, list)
+            self.assertEqual(len(result),1)
+            self.assertIsInstance(result[0], a5_tables.SerieRast)
+            self.assertEqual(result[0].id,19)
+            self.assertEqual(result[0].fuentes_id,40)
+
+    def test_load_gdal_cli(self):
+        connection = Connection(self.url)
+
+        connection.create("SerieRast",{"id":19,"fuentes_id":40})
+        connection.session.commit()
+        connection.session.close()
+        # Output GeoTIFF file path
+        with tempfile.TemporaryDirectory() as temp_dir:
+            input_filename = f"{temp_dir}/sample_rast.tif"
+
+            create_sample_gtiff(input_filename)
+            
+            command = ["a5py","load",input_filename,'ObservacionRast',"-k","timestart=2009-01-01", "-k", "series_id=19","-u",self.url]
+
+            result = subprocess.run(command,check=True)
+            self.assertEqual(result.returncode, 0, "Process failed with return code %d" % result.returncode)
+
+            connection.reopen()
+            read_result = connection.read("ObservacionRast")
+
+            self.assertIsInstance(read_result, list)
+            self.assertEqual(len(read_result),1)
+            self.assertIsInstance(read_result[0], a5_tables.ObservacionRast)
+            self.assertEqual(read_result[0].series_id,19)
 
 
 
@@ -716,7 +792,41 @@ sample_area_geojson_con_exutorio = {
         }
     ]
 }
-        
+
+def create_sample_gtiff(output_file : str):
+
+    # Example 2D array (elevation data, etc.)
+    data = np.array([
+        [0, 1, 0, 1],
+        [1, 0, 1, 0],
+        [0, 1, 0, 1],
+        [1, 0, 1, 0]
+    ], dtype=np.uint8)
+
+    # Geo-referencing parameters
+    origin_x, origin_y = -70.0, -10.0  # Upper-left corner (origin)
+    pixel_size = 1.0                  # Pixel size (assumes square pixels)
+    crs = "EPSG:4326"                  # Coordinate reference system (WGS84)
+
+    # Create a transform
+    transform = from_origin(origin_x, origin_y, pixel_size, pixel_size)
+
+    # Create GeoTIFF
+    with rasterio.open(
+        output_file,
+        "w",
+        driver="GTiff",
+        height=data.shape[0],
+        width=data.shape[1],
+        count=1,  # Number of bands
+        dtype=data.dtype,
+        crs=crs,
+        transform=transform
+    ) as dst:
+        dst.write(data, 1)  # Write data to the first band
+        dst.close()
+
+    print(f"GeoTIFF file created: {output_file}")
 
             
 

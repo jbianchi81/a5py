@@ -20,6 +20,7 @@ from sqlalchemy.orm import class_mapper, ColumnProperty
 from sqlalchemy.exc import IntegrityError
 # from sqlalchemy import inspect
 import logging
+import chardet
 
 GeoJSON = Dict[str, Any]
 
@@ -166,12 +167,10 @@ def query_psql_to_dict(
 
 def importRaster(
     filename : str,
-    db_params : DBParams,
+    db_params : Union[DBParams,str],
     tablename : str = "public.rastest",
 ):
-    
-    drop_table_command = [
-        "psql",
+    connection_args = [db_params] if type(db_params) == str else [
         "-U",
         db_params["username"],
         "-d",
@@ -179,7 +178,11 @@ def importRaster(
         "-h",
         db_params["host"],
         "-p",
-        str(db_params["port"]),
+        str(db_params["port"])
+    ]
+    drop_table_command = [
+        "psql",
+        *connection_args,
         "-c",
         "DROP TABLE IF EXISTS %s;" % tablename
     ]
@@ -192,18 +195,11 @@ def importRaster(
     ]
     psql_command = [
         "psql",
-        "-U",
-        db_params["username"],
-        "-d",
-        db_params["dbname"],
-        "-h",
-        db_params["host"],
-        "-p",
-        str(db_params["port"])
+        *connection_args
     ]
 
     env = None
-    if db_params["password"] is not None:
+    if type(db_params) == dict and db_params["password"] is not None:
         env = {
             "PGPASSWORD": db_params["password"]
         }
@@ -233,7 +229,7 @@ def upsertObservacionRaster(
     sanitize_sql_identifier(tablename)
     sanitize_sql_identifier(columnname)
 
-    returning_columns = "id, series_id, timestart, timeend, valor, timeupdate" if return_values else "id, series_id, timestart, timeend, timeupdate"
+    returning_columns = "id, series_id, timestart, timeend, st_asGdalRaster(valor,'GTiff') valor, timeupdate" if return_values else "id, series_id, timestart, timeend, timeupdate"
 
     comando_insert = f"""
         INSERT INTO observaciones_rast (series_id, timestart, timeend, valor) 
@@ -716,3 +712,23 @@ def validate_geojson(data):
             return False
 
     return True
+
+# def is_text_file(file_path):
+#     with open(file_path, 'rb') as file:
+#         raw_data = file.read()
+#         result = chardet.detect(raw_data)
+#         encoding = result['encoding']
+#         confidence = result['confidence']
+#         # If the file has a high confidence of being decodable as text, treat it as text
+#         if encoding and confidence > 0.8:
+#             return True
+#     return False
+
+def is_text_file(file_path, chunk_size=1024):
+    with open(file_path, 'rb') as file:
+        chunk = file.read(chunk_size)  # Read a chunk of the file
+        if b'\x00' in chunk:  # Null bytes are strong indicators of binary files
+            return False
+        # Check if the majority of bytes are printable
+        text_characters = bytearray(range(32, 127)) + b'\n\r\t\b'
+        return all(byte in text_characters for byte in chunk)
