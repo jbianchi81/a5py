@@ -11,7 +11,7 @@ class CustomInstallCommand(install):
 
 setup(
     name="a5py",
-    version="1.0",
+    version="0.1.1",
     packages=find_packages(),
     description='a5 hydrometeorologic database management system',
     long_description=open("README.md").read(),
@@ -25,7 +25,7 @@ setup(
     python_requires=">=3.10",
     install_requires=[
         "requests",
-        "gdal==3.8.4",
+        "gdal",
         "numpy",
         "psycopg2",
         "sqlalchemy",

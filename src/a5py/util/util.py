@@ -20,7 +20,6 @@ from sqlalchemy.orm import class_mapper, ColumnProperty
 from sqlalchemy.exc import IntegrityError
 # from sqlalchemy import inspect
 import logging
-import chardet
 
 GeoJSON = Dict[str, Any]
 

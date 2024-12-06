@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "a5py"
-version = "0.1"
+version = "0.1.1"
 description = "a5 hydrometeorologic database management system"
 authors = [
     { name = "SSIyAH-INA", email = "jbianchi@ina.gob.ar" },
@@ -19,7 +19,7 @@ classifiers = [
 requires-python = ">=3.10"
 dependencies = [
     "requests",
-    "gdal==3.8.4",
+    "gdal",
     "numpy",
     "psycopg2",
     "sqlalchemy",
