@@ -11,6 +11,7 @@ a5 hydrometeorologic database management system
     # crea ambiente de python e instala
     python -m venv myenv
     source myenv/bin/activate
+    python scripts/pre_install.py
     pip install .
 
     # asigna variables de ambiente (editar de ser necesario)
