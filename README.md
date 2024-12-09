@@ -11,6 +11,7 @@ a5 hydrometeorologic database management system
     # crea ambiente de python e instala
     python -m venv myenv
     source myenv/bin/activate
+    # instala versión correspondiente de gdal para python
     python scripts/pre_install.py
     pip install .
 
