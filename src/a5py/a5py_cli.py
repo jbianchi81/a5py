@@ -8,8 +8,9 @@ import os
 import logging
 from typing import Tuple
 
-default_connection_dict = {**{option: config.get("db_params", option) for option in config.options("db_params")}, "protocol": "postgresql"}
-default_connection_string = serialize_connection_string(default_connection_dict)
+def get_default_connection_string() -> str:
+    default_connection_dict = {**{option: config.get("db_params", option) for option in config.options("db_params")}, "protocol": "postgresql"}
+    return serialize_connection_string(default_connection_dict)
 
 def parse_json(value):
     """
@@ -193,13 +194,13 @@ def main():
     # create / drop schema
 
     create_tables_parser = subparsers.add_parser("create_tables", help="crea tablas para almacenamiento de observaciones raster")
-    create_tables_parser.add_argument("-u","--url",type=str, help="URL de la base de datos (ejemplo: postgresql://username:password@localhost:5432/dbname)", default = default_connection_string)
+    create_tables_parser.add_argument("-u","--url",type=str, help="URL de la base de datos (ejemplo: postgresql://username:password@localhost:5432/dbname)", default = get_default_connection_string())
     create_tables_parser.add_argument("-s","--serie",type=valid_serie, help='crear serie raster a partir de cadena de texto json (ejemplo: {"id": 19, "var_id": 30})')
     create_tables_parser.add_argument("--force-recreate",action="store_true", help="recrear tablas (drop tables before create)")
     create_tables_parser.set_defaults(func=run_create_tables)
 
     drop_tables_parser = subparsers.add_parser("drop_tables", help="elimina tablas para almacenamiento de observaciones raster")
-    drop_tables_parser.add_argument("-u","--url",type=str, help="URL de la base de datos (ejemplo: postgresql://username:password@localhost:5432/dbname)", default = default_connection_string)
+    drop_tables_parser.add_argument("-u","--url",type=str, help="URL de la base de datos (ejemplo: postgresql://username:password@localhost:5432/dbname)", default = get_default_connection_string())
     drop_tables_parser.set_defaults(func=run_drop_tables)
 
     #   read / export
@@ -207,7 +208,7 @@ def main():
     export_parser = subparsers.add_parser("export", help="exporta observacion raster como archivo geotiff")
     export_parser.add_argument("timestart", type=valid_date, help="etiqueta temporal de la observacion a exportar YYYY-MM-DD")
     export_parser.add_argument("output", type=str, help="archivo de salida")
-    export_parser.add_argument("-u","--url",type=str, help="URL de la base de datos (ejemplo: postgresql://username:password@localhost:5432/dbname)", default = default_connection_string)
+    export_parser.add_argument("-u","--url",type=str, help="URL de la base de datos (ejemplo: postgresql://username:password@localhost:5432/dbname)", default = get_default_connection_string())
     export_parser.set_defaults(func=run_export)
 
     # CRUD
@@ -220,7 +221,7 @@ def main():
         help="string JSON o ruta a un archivo JSON"
     )
     create_parser.add_argument("-m","--model", type=valid_a5_model, help="Modelo de los objetos a insertar. Opciones: %s. Si no se define, json_input debe ser tener como claves los nombres de las clases y como valores, arreglos de los objetos a crear. Si se define, json_input puede ser un arreglo de objetos o un único objeto" % a5_tables.keys())
-    create_parser.add_argument("-u","--url",type=str, help="URL de la base de datos (ejemplo: postgresql://username:password@localhost:5432/dbname)", default = default_connection_string)
+    create_parser.add_argument("-u","--url",type=str, help="URL de la base de datos (ejemplo: postgresql://username:password@localhost:5432/dbname)", default = get_default_connection_string())
     create_parser.add_argument("-g","--geojson", action="store_true", help = "Indica que json_input es GeoJSON")
     create_parser.set_defaults(func=run_create)
 
@@ -232,7 +233,7 @@ def main():
         help="ruta a un archivo GDAL o JSON"
     )
     load_parser.add_argument("model", type=valid_a5_model, help="Modelo de los objetos a insertar. Opciones: %s." % a5_tables.keys())
-    load_parser.add_argument("-u","--url",type=str, help="URL de la base de datos (ejemplo: postgresql://username:password@localhost:5432/dbname)", default = default_connection_string)
+    load_parser.add_argument("-u","--url",type=str, help="URL de la base de datos (ejemplo: postgresql://username:password@localhost:5432/dbname)", default = get_default_connection_string())
     load_parser.add_argument("-k","--kwargs",type=parse_key_value_pair,help="argumentos adicionales en forma de clave=valor",action="append")
     load_parser.set_defaults(func=run_load)
 
@@ -240,7 +241,7 @@ def main():
     read_parser = subparsers.add_parser("read", help="Lee objetos de base de datos")
     read_parser.add_argument("model", type=valid_a5_model, help="Modelo de los objetos a leer. Opciones: %s." % a5_tables.keys())
     read_parser.add_argument("output", type=str, help="Archivo de salida")
-    read_parser.add_argument("-u","--url",type=str, help="URL de la base de datos (ejemplo: postgresql://username:password@localhost:5432/dbname)", default = default_connection_string)
+    read_parser.add_argument("-u","--url",type=str, help="URL de la base de datos (ejemplo: postgresql://username:password@localhost:5432/dbname)", default = get_default_connection_string())
     read_parser.add_argument("-g","--geojson", action="store_true", help = "genera formato GeoJSON. Sólo válido para objetos con geometría")
     read_parser.add_argument("-f","--filter", type=parse_key_value_pair,action='append', help="Filtro en la forma clave=valor")
     read_parser.set_defaults(func=run_read)
@@ -250,7 +251,7 @@ def main():
     update_parser.add_argument("model", type=valid_a5_model, help="Modelo de los objetos a actualizar. Opciones: %s." % a5_tables.keys())
     update_parser.add_argument("update_fields", type=parse_key_value_pair,action='append', help="Campo a actualizar en la forma clave=valor")
     # update_parser.add_argument("output", type=str, help="Archivo de salida")
-    update_parser.add_argument("-u","--url",type=str, help="URL de la base de datos (ejemplo: postgresql://username:password@localhost:5432/dbname)", default = default_connection_string)
+    update_parser.add_argument("-u","--url",type=str, help="URL de la base de datos (ejemplo: postgresql://username:password@localhost:5432/dbname)", default = get_default_connection_string())
     # update_parser.add_argument("-g","--geojson", action="store_true", help = "genera formato GeoJSON. Sólo válido para objetos con geometría")
     update_parser.add_argument("-f","--filter", type=parse_key_value_pair,action='append', help="Filtro en la forma clave=valor")
     update_parser.set_defaults(func=run_update)
@@ -259,7 +260,7 @@ def main():
     delete_parser = subparsers.add_parser("delete", help="Elimina objetos de base de datos")
     delete_parser.add_argument("model", type=valid_a5_model, help="Modelo de los objetos a eliminar. Opciones: %s." % a5_tables.keys())
     delete_parser.add_argument("-o","--output", type=str, help="Guardar los objetos eliminados en este archivo de salida")
-    delete_parser.add_argument("-u","--url",type=str, help="URL de la base de datos (ejemplo: postgresql://username:password@localhost:5432/dbname)", default = default_connection_string)
+    delete_parser.add_argument("-u","--url",type=str, help="URL de la base de datos (ejemplo: postgresql://username:password@localhost:5432/dbname)", default = get_default_connection_string())
     delete_parser.add_argument("-f","--filter", type=parse_key_value_pair,action='append', help="Filtro en la forma clave=valor")
     delete_parser.add_argument("-s","--skip_confirmation", action='store_true', help="Saltear confirmación (sí a todo)")
     delete_parser.set_defaults(func=run_delete)
@@ -276,7 +277,7 @@ def main():
     rast2areal_parser.add_argument("-i","--insert", action="store_true", help="Inserta el resultado en la serie areal indicada con -s")
     rast2areal_parser.add_argument("-c","--on_conflict", type=str, help="Indica qué acción realizar si al insertar se encuentra un conflicto de clave primaria. Por defecto se genera un error",choices=["update","nothing"])
     rast2areal_parser.add_argument("-o","--output", type=str, help="Guardar la serie areal en este archivo de salida")
-    rast2areal_parser.add_argument("-u","--url",type=str, help="URL de la base de datos (ejemplo: postgresql://username:password@localhost:5432/dbname)", default = default_connection_string)
+    rast2areal_parser.add_argument("-u","--url",type=str, help="URL de la base de datos (ejemplo: postgresql://username:password@localhost:5432/dbname)", default = get_default_connection_string())
     rast2areal_parser.set_defaults(func=run_rast2areal)
 
     # parse args

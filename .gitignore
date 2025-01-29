@@ -10,3 +10,4 @@ src/a5py.egg-info
 a5py.egg-info
 __pycache__
 .vscode
+tmp
